@@ -1,9 +1,6 @@
-
-from flask import Flask, render_template_string
-from threading import Thread
+from flask import Flask
 
 app = Flask(__name__)
-
 
 @app.route(
     "/",
@@ -22,11 +19,6 @@ app = Flask(__name__)
 def main():
     return "I'm alive!"
 
-
-def run():
-    app.run(host="0.0.0.0", port=10101, debug=False, use_reloader=False)
-
-
-def keep_alive():
-    server = Thread(target=run)
-    server.start()
+# This line is only for local testing; it should not be in production.
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=10101, debug=False)
