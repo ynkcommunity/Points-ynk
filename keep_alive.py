@@ -1,5 +1,6 @@
 from flask import Flask, render_template_string
 from threading import Thread
+import os
 
 app = Flask(__name__)
 
@@ -23,7 +24,10 @@ def main():
 
 
 def run():
-    app.run(host="0.0.0.0", port=10101, debug=False, use_reloader=False)
+    port = int(os.getenv('PORT', 3000))  # Ensure you're using Render's dynamically assigned port
+    print(f"Starting Flask on port {port}")  # Log the port number
+
+    app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False)
 
 
 def keep_alive():
