@@ -1207,7 +1207,7 @@ async def handle_bonus_command(message):
         return
 
     # Grant the bonus points and update daily usage
-    points = 10  # Example bonus points
+    points = 3  # Example bonus points
     update_user_points(user_id, points)  # Assume this function updates user points in the DB
     daily_usage[user_id]["bonus"] = True  # Mark the bonus as claimed for today
     save_daily_usage(daily_usage)  # Save the updated daily usage to file
@@ -1259,7 +1259,7 @@ async def handle_daily_command(message):
         return
 
     # Give daily points and update usage
-    points = random.randint(5, 15)
+    points = random.randint(1, 5)
     update_user_points(user_id, points)
     daily_usage[user_id]["daily"] = True
     save_daily_usage(daily_usage)
@@ -1286,7 +1286,7 @@ async def handle_loyal_command(message):
 
     # Check if the user has the special role
     if special_role_id in [role.id for role in message.author.roles]:
-        points = 10
+        points = 3
         update_user_points(user_id, points)
         daily_usage[user_id]["special"] = True
         save_daily_usage(daily_usage)
@@ -1315,12 +1315,12 @@ async def handle_risk_command(message):
     # Handle risk-based point gain/loss
     chance = random.random()
     if chance < 0.5:
-        points = random.randint(5, 10)
+        points = random.randint(1, 3)
         update_user_points(user_id, points)
         await message.channel.send(f"{message.author.mention}, لقد أخذت مخاطرة وربحت {points} نقاط!")
     else:
         current_points = get_user_points(user_id)
-        points_lost = min(current_points, random.randint(2, 6))
+        points_lost = min(current_points, random.randint(1, 3))
         update_user_points(user_id, -points_lost)
         await message.channel.send(f"{message.author.mention}, لقد أخذت مخاطرة وخسرت {points_lost} نقاط!")
 
@@ -1336,9 +1336,9 @@ async def handle_quests_command(message):
     embed.add_field(
         name="المهام",
         value=(
-            "1. **كن نشطًا في المحادثات الصوتية** - اقضِ ساعة واحدة في المحادثة الصوتية. يمكنك القيام بهذه المهمة 3 مرات في اليوم. *(المكافأة: 15 نقطة)*\n"
-            "2. **كن نشطًا في المحادثات النصية** -اكثر شخص نشاطا في السيرفر اسبوعيا  *(المكافأة: 100 نقطة)*\n"
-            "3. **ادعُ صديقًا** - ادخال اصدقاء للسيرفر ثم افتح تكت للحصول على النقاط *(المكافأة: 15 نقاط)*\n"
+            "1. **كن نشطًا في المحادثات الصوتية** - اقضِ ساعة واحدة في المحادثة الصوتية. يمكنك القيام بهذه المهمة 3 مرات في اليوم. *(المكافأة 3 نقاط)*\n"
+            "2. **كن نشطًا في المحادثات النصية** -اكثر شخص نشاطا في السيرفر اسبوعيا  *(المكافأة: 15 نقطة)*\n"
+            "3. **ادعُ صديقًا** - ادخال اصدقاء للسيرفر ثم افتح تكت للحصول على النقاط *(المكافأة: 5 نقاط)*\n"
         ),
         inline=False
     )
@@ -1682,32 +1682,31 @@ async def handle_steal_command(message):
     success = random.random() < 0.5  # 50% chance of success
 
     if success:
-        stolen_points = random.randint(1, 10)
+        stolen_points = random.randint(1, 4)
         victim_points = get_user_points(victim_id)
         stolen_points = min(stolen_points, victim_points)
         
-        # Bag check: If stealer has a bag, double the stolen points
+ 
         if stealer_data['bags'] > 0:
             stolen_points *= 2
-            update_user_data(stealer_id, bags=stealer_data['bags'] - 1)  # Consume the bag
+            update_user_data(stealer_id, bags=stealer_data['bags'] - 1)
             await message.channel.send(f"تم استخدام حقيبة مضاعفة النقاط، النقاط المسروقة مضاعفة إلى {stolen_points}.")
 
-        # Check if stolen points exceed 25 after doubling
-        if stolen_points > 25:
-            fine = 10
-            update_user_points(stealer_id, -fine)  # Apply a 10 point fine to the stealer
-            update_user_points(victim_id, stolen_points)  # Return stolen points to the victim
+
+        if stolen_points > 6:
+            fine = 2
+            update_user_points(stealer_id, -fine)  
+            update_user_points(victim_id, stolen_points)  
             await message.channel.send(
                 f"{message.author.mention} سرق {stolen_points} نقاط من {victim.mention}، لكن حصل على غرامة 10 نقاط وتمت إعادة النقاط!"
             )
         else:
-            # Transfer the stolen points
+
             update_user_points(victim_id, -stolen_points)
             update_user_points(stealer_id, stolen_points)
-            
-            # Handle Lawyer logic for the victim
+
             if victim_data['lawyer'] > 0 and victim_data['lawyer_expiry'] > now:
-                update_user_points(victim_id, stolen_points)  # Revert stolen points
+                update_user_points(victim_id, stolen_points)  
                 victim_data['lawyer'] -= 1
                 update_user_data(victim_id, lawyer=victim_data['lawyer'])
                 await message.channel.send(
@@ -1718,14 +1717,13 @@ async def handle_steal_command(message):
                     f"{message.author.mention} نجح في سرقة {stolen_points} نقاط من {victim.mention}!"
                 )
     else:
-        lost_points = 5
+        lost_points = 2
         current_points = get_user_points(stealer_id)
         lost_points = min(lost_points, current_points)
         update_user_points(stealer_id, -lost_points)
 
-        # Handle Lawyer logic for the stealer
         if stealer_data['lawyer'] > 0 and stealer_data['lawyer_expiry'] > now:
-            update_user_points(stealer_id, lost_points)  # Revert lost points
+            update_user_points(stealer_id, lost_points)  
             stealer_data['lawyer'] -= 1
             update_user_data(stealer_id, lawyer=stealer_data['lawyer'])
             await message.channel.send(
@@ -1736,11 +1734,9 @@ async def handle_steal_command(message):
                 f"{message.author.mention} فشل في السرقة وخسر {lost_points} نقاط!"
             )
 
-    # Save the updated data
     save_steal_attempts(steal_attempts)
     save_steal_victims(steal_victims)
 
-    # Set cooldown
     cooldowns[stealer_id] = now
 
 async def handle_shop_command(message):
@@ -1807,20 +1803,20 @@ def end_vc(user_id):
     if str(user_id) in data and "last_join" in data[str(user_id)]:
         last_join = datetime.fromisoformat(data[str(user_id)]["last_join"])
         now = datetime.now()
-        time_spent = (now - last_join).total_seconds() / 60  # Convert to minutes
+        time_spent = (now - last_join).total_seconds() / 60  
 
         data[str(user_id)]["total_time"] += time_spent
 
         if data[str(user_id)]["total_time"] >= 60:
             if data[str(user_id)]["bonus_received"] < 3:
-                # Award 15 points if bonus_received is less than 3
-                update_user_points(user_id, 15)
+
+                update_user_points(user_id, 3)
                 data[str(user_id)]["bonus_received"] += 1
             else:
-                # Award 5 points if bonus_received is 3 or more
-                update_user_points(user_id, 5)
 
-            data[str(user_id)]["total_time"] -= 60  # Subtract 60 minutes for the bonus
+                update_user_points(user_id, 1)
+
+            data[str(user_id)]["total_time"] -= 60 
 
         save_vc_data(data)
 
@@ -1870,19 +1866,19 @@ async def reset_vc_data():
          json.dump({}, f)
     print("VC data reset.")
 def reset_daily_usage():
-    # Load existing daily usage data from JSON file
+
     with open('daily_usage.json', 'r') as file:
         daily_usage_data = json.load(file)['daily_usage']
     
-    # Reset all fields (daily, special, risk, quests, bonus) to 0 for each user
+
     for record in daily_usage_data:
         record['daily'] = 0
         record['special'] = 0
         record['risk'] = 0
         record['quests'] = 0
-        record['bonus'] = 0  # Reset bonus status
+        record['bonus'] = 0 
 
-    # Save the reset data back to the JSON file
+
     with open('daily_usage.json', 'w') as file:
         json.dump({"daily_usage": daily_usage_data}, file, indent=4)
 
@@ -1929,14 +1925,11 @@ async def reset_rage_mode():
     all_users = get_all_users_data()
 
     for user_data in all_users:
-        # Check if the user has an active rage_mode and it hasn't expired yet
         if user_data['rage_mode'] > 0 and user_data['rage_mode_expiry'] > now:
-            # Check if the user is in a family and family_active is 'Yes'
+
             if user_data['family'] and user_data['family_active'] == 'Yes':
                 user_data['rage_steals'] = max_rage_steals
                 user_data['rage_vulnerabilities'] = max_rage_vulnerabilities
-
-                # Update the user's data in the database
                 update_user_data(
                     user_data['id'],
                     rage_steals=user_data['rage_steals'],
@@ -1958,20 +1951,17 @@ async def daily_reset():
         role_id = 1278375524368125962  # Replace with your actual role ID
         role_mention = f"<@&{role_id}>"
 
-        # Perform your reset functions
-        reset_daily_usage()  # Reset daily usage
-        await reset_vc_data()  # Reset voice channel data
-        await reset_rage_mode()  # Reset rage mode
+        reset_daily_usage()  
+        await reset_vc_data() 
+        await reset_rage_mode()  
 
-        # Reset steal data
         with open(steal_attempts_file, 'w') as f:
             json.dump({}, f)
         with open(steal_victims_file, 'w') as f:
             json.dump({}, f)
         print("Steal data reset.")
 
-        # Send notification message to the specified channel
-        notification_channel = client.get_channel(notification_channel_id)  # Use 'client' instead of 'bot'
+        notification_channel = client.get_channel(notification_channel_id) 
         if notification_channel:
             await notification_channel.send(
                 f"{role_mention}, daily commands and quests have been reset! You can use them again."
