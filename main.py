@@ -753,10 +753,6 @@ async def on_message(message):
             await handle_quests_command(message)
         elif message.content.startswith("-reset"):
             await update_expired_status(message)
-        elif message.content.startswith("-hide"):
-            await handle_deposit_command(message)
-        elif message.content.startswith("-take"):
-            await handle_withdraw_command(message)
         elif message.content.startswith("-bonus"):
             await  handle_bonus_command(message)
     if message.guild and message.guild.id == allowed_server_id and message.channel.id == allowed_channel_id2:
