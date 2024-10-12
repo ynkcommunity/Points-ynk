@@ -1163,15 +1163,17 @@ async def handle_ynk_command(message):
         await message.channel.send(f"{message.author.mention}, you have been given the role {role.name}.")
 
     embed = discord.Embed(
-        title="نظام النقاط",
-        description="استخدم الأوامر التالية لكسب النقاط أو المخاطرة بها!\n"
-                    "`-daily`: اكسب بين 5 و 15 نقطة مرة واحدة في اليوم.\n"
-                    "`-loyal`: اكسب 10 نقاط إذا وضعت رابط السيرفر في البايو الخاص بك. قابل للاستخدام مرة واحدة في اليوم.\n"
-                    "`-risk`: خذ المخاطرة! قد تربح بين 5 و 10 نقاط، لكن قد تخسر أيضًا بين 2 و 6 نقاط. قابل للاستخدام مرة واحدة في اليوم.\n"
-                    "`-Bonus`: اكسب 10 نقاط اذا كنت في كلان او فريق او تيم وتم تصنيفك كعضو ناشط .\n"
-                    "`-quests`: عرض المهام المتاحة لكسب نقاط إضافية."
+        title="مساعدة أوامر البوت",
+        description="نظام النقاط هو لعبة ممتعة في السيرفر تتيح لك شراء الأدوار والميزات داخل السيرفر، مع العديد من التحديثات القادمة قريبًا!",
+        color=discord.Color.blue()
     )
-    
+
+
+    embed.set_footer(text="استخدم هذه الأوامر لكسب وإنفاق النقاط في السيرفر!")
+
+    embed.set_image(url="https://media.discordapp.net/attachments/1285016876056842391/1294100386772160574/image.png?ex=670b19e7&is=6709c867&hm=52dfee18c5e08dd31b1f8cef49bc5a2365c173657d604c1ef497e7233d52b3eb&=&format=webp&quality=lossless&width=427&height=662")
+
+    await message.channel.send(embed=embed)
     await message.channel.send(embed=embed)
 
 
@@ -1514,9 +1516,13 @@ async def handle_points_command(message):
 
     if user_id:
         current_points = get_user_points(user_id)
-        await message.channel.send(
-            f"{user.mention} currently has {current_points} points."
+        # Create an embed for displaying the points
+        embed = discord.Embed(
+            title="User Points",
+            description=f"{user.mention} currently has {current_points} points <:ynk_points:1294654518067335229>.",
+            color=discord.Color.blue()
         )
+        await message.channel.send(embed=embed)
     else:
         await message.channel.send(
             f"{message.author.mention}, please provide a valid user mention or ID."
