@@ -1174,7 +1174,6 @@ async def handle_ynk_command(message):
     embed.set_image(url="https://media.discordapp.net/attachments/1285016876056842391/1294100386772160574/image.png?ex=670b19e7&is=6709c867&hm=52dfee18c5e08dd31b1f8cef49bc5a2365c173657d604c1ef497e7233d52b3eb&=&format=webp&quality=lossless&width=427&height=662")
 
     await message.channel.send(embed=embed)
-    await message.channel.send(embed=embed)
 
 
 async def handle_bonus_command(message):
@@ -1242,15 +1241,27 @@ async def handle_daily_command(message):
     user_id = str(message.author.id)
     daily_usage = load_daily_usage()
 
-    # Ensure the user exists in the daily_usage, otherwise initialize
+    if not isinstance(daily_usage, dict):
+        daily_usage = {}
+
     if user_id not in daily_usage:
         daily_usage[user_id] = {
             "daily": False,
             "special": False,
             "risk": False,
-            "quests": False
+            "quests": False  
         }
-    
+    else:
+        if "quests" not in daily_usage[user_id]:
+            daily_usage[user_id]["quests"] = False
+
+    get_or_create_user(user_id, message.author.name)
+      
+    role_id = 1278375524368125962
+    role = message.guild.get_role(role_id)
+    if role not in message.author.roles:
+        await message.author.add_roles(role)
+        await message.channel.send(f"{message.author.mention}, you have been given the role {role.name}.")
     # Check if the daily has already been claimed
     if daily_usage[user_id]["daily"]:
         await message.channel.send(f"{message.author.mention}, لقد استخدمت هذا الزر اليوم، عد غدًا.")
@@ -1522,6 +1533,12 @@ async def handle_points_command(message):
             description=f"{user.mention} currently has {current_points} points <:ynk_points:1294654518067335229>.",
             color=discord.Color.blue()
         )
+        # Add additional message as a field
+        embed.add_field(
+            name="Don't forget!",
+            value="لا تنسى اخذ مكافئتك الاضافية من موقعنا: [YNK Website](https://ynk-rho.vercel.app/)",
+            inline=False
+        )
         await message.channel.send(embed=embed)
     else:
         await message.channel.send(
@@ -1746,43 +1763,9 @@ async def handle_shop_command(message):
         title="المتجر",
         description="اختر عنصرًا للشراء باستخدام الأمر `-buy <رقم العنصر>`:",
         color=discord.Color.blue()
-    )
-    embed.add_field(
-        name=f"1. GIF Permission - {item_prices[1]} Points", 
-        value="اشتري القدرة على إرسال صور GIF في الخادم لمدة 96 ساعة.", 
-        inline=False
-    )
-    embed.add_field(
-        name=f"2. Custom Emoji Reaction - {item_prices[2]} Points", 
-        value="اشتري ردة فعل مخصصة لإيموجي يتم إضافتها تلقائيًا إلى رسائلك لمدة 7 أيام.", 
-        inline=False
-    )
-    embed.add_field(
-        name=f"3. ProBot Credits - {item_prices[3]} Points", 
-        value="اشتري 100,000 من رصيد ProBot.", 
-        inline=False
-    )
-    embed.add_field(
-        name=f"4. Lawyer - {item_prices[4]} Points", 
-        value="يحميك من فقدان النقاط في حالة فشل السرقة (صالح لمدة 48 ساعة)", 
-        inline=False
-    )
-    embed.add_field(
-        name=f"5. Shield - {item_prices[5]} Points", 
-        value="يمنع الآخرين من سرقتك ولكنه يمنعك أيضًا من السرقة (صالح لمدة 48 ساعة)", 
-        inline=False
-    )
-    embed.add_field(
-        name=f"6. Rage Mode - {item_prices[6]} Points", 
-        value="يسمح لك بسرقة خمسة أشخاص لكن يمكنهم سرقتك خمس مرات أيضًا (صالح لمدة 48 ساعة)", 
-        inline=False
-    )
-    embed.add_field(
-        name=f"7. Bags - {item_prices[7]} Points", 
-        value="تسمح لك الحقيبة بسرقة عدد اكبر من النقاط  ولكن للطمع عواقب ايضا", 
-        inline=False
-    )
+    
 
+    embed.set_image(url="https://media.discordapp.net/attachments/1285016876056842391/1294094675728269384/image.png?ex=670b1495&is=6709c315&hm=9d487ae7f3c6ce4c421f445695dc1895f2cd62ec2d9f221fe69f05d675db0237&=&format=webp&quality=lossless&width=412&height=662")
     await message.channel.send(embed=embed)
 def start_vc(user_id):
     data = load_vc_data()
