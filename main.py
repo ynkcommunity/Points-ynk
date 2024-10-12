@@ -1763,10 +1763,11 @@ async def handle_shop_command(message):
         title="المتجر",
         description="اختر عنصرًا للشراء باستخدام الأمر `-buy <رقم العنصر>`:",
         color=discord.Color.blue()
-    
+    )
 
     embed.set_image(url="https://media.discordapp.net/attachments/1285016876056842391/1294094675728269384/image.png?ex=670b1495&is=6709c315&hm=9d487ae7f3c6ce4c421f445695dc1895f2cd62ec2d9f221fe69f05d675db0237&=&format=webp&quality=lossless&width=412&height=662")
     await message.channel.send(embed=embed)
+
 def start_vc(user_id):
     data = load_vc_data()
 
