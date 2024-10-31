@@ -662,7 +662,7 @@ async def get_or_create_user(user_id, username):
         connection.close()
 
     # Fetch the guild and user to send the message
-    guild = client.get_guild(YOUR_GUILD_ID)  # Replace with your actual Guild ID
+    guild = client.get_guild(1267826514695557132)  # Replace with your actual Guild ID
     user = guild.get_member(user_id)
 
     if user:
