@@ -644,56 +644,76 @@ def generate_random_password(length=10):
     characters = string.ascii_letters + string.digits
     return ''.join(random.choice(characters) for _ in range(length))
 
-# Function to get or create a user and send an embed message if newly created
-async def get_or_create_user(user_id, username, discord_user):
+# Function to send the embed message to the new user
+async def send_welcome_embed(user, password):
+    embed = discord.Embed(
+        title="🎉 مرحبًا بك في نظام نقاط YNK! 🎉",
+        description=(
+            f"مرحبًا {user.name}، يسعدنا انضمامك إلى نظامنا الافتراضي للتداول بالنقاط. "
+            "جرب التداول في بيئة آمنة تمامًا ومجانية بالكامل.\n\n"
+            "💼 **كل التداول هنا افتراضي تمامًا، خالٍ من أي مخاطر مالية.**\n\n"
+        ),
+        color=discord.Color.gold()
+    )
+    
+    # Add the password field
+    embed.add_field(name="🔑 كلمة المرور الخاصة بك:", value=f"`{password}`", inline=False)
+    
+    # Add additional links for the YNK platform
+    ynk_points_channel = "https://discord.com/channels/1267826514695557132/1278306906036899860"  # Replace with actual link
+    ynk_home_website = "https://ynk-rho.vercel.app/"         # Replace with actual link
+    ynk_trading_platform = "https://ynk-trading.vercel.app/"  # Replace with actual link
+
+    embed.add_field(name="💬 قناة نقاط YNK", value=f"[رابط القناة]({ynk_points_channel})", inline=True)
+    embed.add_field(name="🌐 موقع YNK", value=f"[رابط الموقع]({ynk_home_website})", inline=True)
+    embed.add_field(name="📈 منصة YNK للتداول", value=f"[رابط المنصة]({ynk_trading_platform})", inline=True)
+    
+    embed.set_footer(text="تذكر: التداول هنا افتراضي بالكامل، ومجاني، وخالٍ من المخاطر تمامًا!")
+    
+    # Send the embed message to the user
+    try:
+        await user.send(embed=embed)
+        logger.info(f"Sent welcome DM to new user {user.name}")
+    except discord.Forbidden:
+        logger.warning(f"Could not send DM to {user.name} (DMs closed).")
+
+
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Function to insert or update a user in the database
+def get_or_create_user(user_id, username):
     connection = get_db_connection()
-    password = generate_random_password()
-    new_user_created = False
+    is_new_user = False
+    password = generate_random_password()  # Generate password for new users
     
     try:
         with connection.cursor() as cursor:
-            # Insert user with random password or update username if user already exists
+            # SQL to insert a new user with a password or update username if user already exists
             sql = """
-            INSERT INTO users (id, username, points, password) 
-            VALUES (%s, %s, 0, %s) 
-            ON DUPLICATE KEY UPDATE username = %s
+                INSERT INTO users (id, username, points, password) 
+                VALUES (%s, %s, 0, %s) 
+                ON DUPLICATE KEY UPDATE username = %s
             """
             result = cursor.execute(sql, (user_id, username, password, username))
             connection.commit()
             
-            # Check if a new user was created (result will be 1 if inserted, 2 if updated)
+            # Check if a new user was created by looking at affected rows
             if result == 1:
-                new_user_created = True
+                is_new_user = True
     finally:
         connection.close()
     
-    # If the user was newly created, send them an embed message with their password
-    if new_user_created:
-        try:
-            # Define embed message
-            embed = discord.Embed(
-                title="🎉 مرحبًا بك في نظام التداول الافتراضي بالنقاط! 🎉",
-                description=(
-                    f"مرحبًا {username}، يسعدنا أن نعلمك أنك أصبحت جزءًا من نظام التداول الافتراضي بالنقاط! "
-                    "ابدأ تجربتك في التداول الافتراضي الآمن الآن.\n\n"
-                    "💼 **هذه المنصة مجانية تمامًا ولا تحتوي على أي خسائر مالية.**"
-                ),
-                color=discord.Color.gold()
-            )
-            embed.add_field(name="🔑 كلمة المرور الخاصة بك:", value=f"`{password}`", inline=False)
-            
-            # Add links for easy access (replace URLs with actual links)
-            embed.add_field(name="💬 قناة نقاط YNK", value=f"[رابط القناة](https://discord.com/channels/1267826514695557132/1278306906036899860)", inline=True)
-            embed.add_field(name="🌐 موقع YNK", value=f"[رابط الموقع](https://ynk-rho.vercel.app/)", inline=True)
-            embed.add_field(name="📈 منصة YNK للتداول", value=f"[رابط المنصة](https://ynk-trading.vercel.app/)", inline=True)
-            
-            embed.set_footer(text="تذكر: التداول هنا افتراضي بالكامل، ومجاني، وخالٍ من المخاطر تمامًا!")
-            
-            # Send DM to the user
-            await discord_user.send(embed=embed)
-            logger.info(f"Sent welcome DM to new user {username}")
-        except discord.Forbidden:
-            logger.warning(f"Could not send DM to new user {username} (DMs closed).")
+    if is_new_user:
+        # Schedule the send_welcome_embed as a task to run asynchronously
+        guild = bot.get_guild(YOUR_GUILD_ID)
+        user = guild.get_member(user_id)
+        
+        if user:
+            bot.loop.create_task(send_welcome_embed(user, password))
+    
+    return is_new_user
 
 def update_user_points(user_id, points_to_add, username=None):
     connection = get_db_connection()
