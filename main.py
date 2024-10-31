@@ -661,34 +661,7 @@ async def get_or_create_user(user_id, username):
     finally:
         connection.close()
 
-    # Fetch the guild and user to send the message
-    guild = client.get_guild(1267826514695557132)  # Replace with your actual Guild ID
-    user = guild.get_member(user_id)
 
-    if user:
-        # Create the embed
-        embed = discord.Embed(
-            title="🎉 مرحبًا بك في نظام نقاط YNK! 🎉",
-            description=(
-                f"مرحبًا {username}، يسعدنا انضمامك إلى نظامنا الافتراضي للتداول بالنقاط. "
-                "جرب التداول في بيئة آمنة تمامًا ومجانية بالكامل.\n\n"
-                "💼 **كل التداول هنا افتراضي تمامًا، خالٍ من أي مخاطر مالية.**\n\n"
-            ),
-            color=discord.Color.gold()
-        )
-
-        embed.add_field(name="🔑 كلمة المرور الخاصة بك:", value=f"`{password}`", inline=False)
-        embed.add_field(name="💬 قناة نقاط YNK", value="[رابط القناة](https://discord.com/channels/1267826514695557132/1278306906036899860)", inline=True)
-        embed.add_field(name="🌐 موقع YNK", value="[رابط الموقع](https://ynk-rho.vercel.app/)", inline=True)
-        embed.add_field(name="📈 منصة YNK للتداول", value="[رابط المنصة](https://ynk-trading.vercel.app/)", inline=True)
-        embed.set_footer(text="تذكر: التداول هنا افتراضي بالكامل، ومجاني، وخالٍ من المخاطر تمامًا!")
-        
-        # Send the embed message
-        try:
-            await user.send(embed=embed)
-            logger.info(f"Sent welcome DM to user {username}")
-        except discord.Forbidden:
-            logger.warning(f"Could not send DM to {username} (DMs closed).")
 
 
 def update_user_points(user_id, points_to_add, username=None):
