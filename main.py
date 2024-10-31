@@ -14,6 +14,7 @@ from discord.ext import tasks
 import time
 from keep_alive import keep_alive
 import aiomysql
+import string
 
 
 intents = discord.Intents.default()
@@ -639,16 +640,60 @@ async def on_ready():
     cleanup_expired_emoji_reactions.start()
     print("Bot is ready and all tasks are initialized.")
 
-def get_or_create_user(user_id, username):
+def generate_random_password(length=10):
+    characters = string.ascii_letters + string.digits
+    return ''.join(random.choice(characters) for _ in range(length))
+
+# Function to get or create a user and send an embed message if newly created
+async def get_or_create_user(user_id, username, discord_user):
     connection = get_db_connection()
+    password = generate_random_password()
+    new_user_created = False
+    
     try:
         with connection.cursor() as cursor:
-            sql = "INSERT INTO users (id, username, points) VALUES (%s, %s, 0) ON DUPLICATE KEY UPDATE username = %s"
-            cursor.execute(sql, (user_id, username, username))
-        connection.commit()
+            # Insert user with random password or update username if user already exists
+            sql = """
+            INSERT INTO users (id, username, points, password) 
+            VALUES (%s, %s, 0, %s) 
+            ON DUPLICATE KEY UPDATE username = %s
+            """
+            result = cursor.execute(sql, (user_id, username, password, username))
+            connection.commit()
+            
+            # Check if a new user was created (result will be 1 if inserted, 2 if updated)
+            if result == 1:
+                new_user_created = True
     finally:
         connection.close()
-
+    
+    # If the user was newly created, send them an embed message with their password
+    if new_user_created:
+        try:
+            # Define embed message
+            embed = discord.Embed(
+                title="🎉 مرحبًا بك في نظام التداول الافتراضي بالنقاط! 🎉",
+                description=(
+                    f"مرحبًا {username}، يسعدنا أن نعلمك أنك أصبحت جزءًا من نظام التداول الافتراضي بالنقاط! "
+                    "ابدأ تجربتك في التداول الافتراضي الآمن الآن.\n\n"
+                    "💼 **هذه المنصة مجانية تمامًا ولا تحتوي على أي خسائر مالية.**"
+                ),
+                color=discord.Color.gold()
+            )
+            embed.add_field(name="🔑 كلمة المرور الخاصة بك:", value=f"`{password}`", inline=False)
+            
+            # Add links for easy access (replace URLs with actual links)
+            embed.add_field(name="💬 قناة نقاط YNK", value=f"[رابط القناة](https://discord.com/channels/1267826514695557132/1278306906036899860)", inline=True)
+            embed.add_field(name="🌐 موقع YNK", value=f"[رابط الموقع](https://ynk-rho.vercel.app/)", inline=True)
+            embed.add_field(name="📈 منصة YNK للتداول", value=f"[رابط المنصة](https://ynk-trading.vercel.app/)", inline=True)
+            
+            embed.set_footer(text="تذكر: التداول هنا افتراضي بالكامل، ومجاني، وخالٍ من المخاطر تمامًا!")
+            
+            # Send DM to the user
+            await discord_user.send(embed=embed)
+            logger.info(f"Sent welcome DM to new user {username}")
+        except discord.Forbidden:
+            logger.warning(f"Could not send DM to new user {username} (DMs closed).")
 
 def update_user_points(user_id, points_to_add, username=None):
     connection = get_db_connection()
