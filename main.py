@@ -644,7 +644,6 @@ def generate_random_password(length=10):
     characters = string.ascii_letters + string.digits
     return ''.join(random.choice(characters) for _ in range(length))
 
-# Function to send the embed message to the new user
 async def send_welcome_embed(user, password):
     embed = discord.Embed(
         title="🎉 مرحبًا بك في نظام نقاط YNK! 🎉",
@@ -663,7 +662,6 @@ async def send_welcome_embed(user, password):
     ynk_points_channel = "https://discord.com/channels/1267826514695557132/1278306906036899860"  # Replace with actual link
     ynk_home_website = "https://ynk-rho.vercel.app/"         # Replace with actual link
     ynk_trading_platform = "https://ynk-trading.vercel.app/"  # Replace with actual link
-
     embed.add_field(name="💬 قناة نقاط YNK", value=f"[رابط القناة]({ynk_points_channel})", inline=True)
     embed.add_field(name="🌐 موقع YNK", value=f"[رابط الموقع]({ynk_home_website})", inline=True)
     embed.add_field(name="📈 منصة YNK للتداول", value=f"[رابط المنصة]({ynk_trading_platform})", inline=True)
@@ -677,8 +675,6 @@ async def send_welcome_embed(user, password):
     except discord.Forbidden:
         logger.warning(f"Could not send DM to {user.name} (DMs closed).")
 
-
-# Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -707,11 +703,11 @@ def get_or_create_user(user_id, username):
     
     if is_new_user:
         # Schedule the send_welcome_embed as a task to run asynchronously
-        guild = bot.get_guild(YOUR_GUILD_ID)
+        guild = client.get_guild(1267826514695557132)
         user = guild.get_member(user_id)
         
         if user:
-            bot.loop.create_task(send_welcome_embed(user, password))
+            client.loop.create_task(send_welcome_embed(user, password))
     
     return is_new_user
 
