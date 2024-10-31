@@ -1195,7 +1195,7 @@ async def handle_ynk_command(message):
         if "quests" not in daily_usage[user_id]:
             daily_usage[user_id]["quests"] = False
 
-    get_or_create_user(user_id, message.author.name)
+    await get_or_create_user(user_id, message.author.name)
       
     role_id = 1278375524368125962
     role = message.guild.get_role(role_id)
