@@ -48,13 +48,13 @@ steal_attempts_file = "steal_attempts.json"
 steal_victims_file = "steal_victims.json"
 # Global dictionary to store item prices
 item_prices = {
-    1: 40,   # GIF Permission
-    2: 550,  # Custom Emoji Reaction
-    3: 100,  # ProBot Credits
-    4: 20,   # Lawyer
-    5: 15,   # Shield
-    6: 25, 
-    7: 15
+    1: 50,   # GIF Permission
+    2: 300,  # Custom Emoji Reaction
+    3: 150,  # ProBot Credits
+    4: 15,   # Lawyer
+    5: 10,   # Shield
+    6: 15, 
+    7: 2
 }
 # Initialize JSON files if they don't exist
 if not os.path.exists(steal_attempts_file):
