@@ -756,8 +756,7 @@ async def on_message(message):
             await handle_family_command(message)
         elif message.content.startswith("-refamily"):
             await handle_removefamily_command(message)
-        elif message.content.startswith("-picture"):
-            await handle_picture_command(message)
+
         elif message.content.startswith("-setactive"):
             await handle_setfamilyactive_command(message)
         elif message.content.startswith("-daily"):
@@ -777,6 +776,8 @@ async def on_message(message):
     if message.guild and message.guild.id == allowed_server_id and message.channel.id == allowed_channel_id2:
         if message.content.startswith("-تلبيس"):
             await handle_dress_command(message)
+        elif message.content.startswith("-picture"):
+            await handle_picture_command(message)
     if message.guild and message.guild.id == allowed_server_id and message.mentions:
         await handle_auto_react(message)
 def get_user_rank_and_points(user_id):
