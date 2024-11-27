@@ -129,6 +129,7 @@ def get_top_users(limit=15):
             return result
     finally:
         connection.close()
+
 async def handle_setprice_command(message):
     # Check if the user is an admin or authorized to change prices
     if message.author.id != bot_owner_id and not any(
@@ -1772,6 +1773,79 @@ async def handle_steal_command(message):
 
     cooldowns[stealer_id] = now
 
+async def handle_heist_command(message):
+    stealer_id = str(message.author.id)
+    now = datetime.now()
+
+    # Check for cooldown
+    if stealer_id in cooldowns:
+        last_attempt_time = cooldowns[stealer_id]
+        if now < last_attempt_time + timedelta(minutes=5):  # 5-minute cooldown
+            remaining_time = (last_attempt_time + timedelta(minutes=5) - now).seconds
+            await message.channel.send(f"يرجى الانتظار {remaining_time // 60} دقيقة قبل محاولة السطو مرة أخرى.")
+            return
+
+    # Check if user has enough points
+    stealer_points = get_user_points(stealer_id)
+    if stealer_points < 50:
+        await message.channel.send("يجب أن تمتلك على الأقل 50 نقطة لتنفيذ عملية السطو.")
+        return
+
+    # Deduct 50 points for the heist
+    update_user_points(stealer_id, -50)
+    
+    # Get all users except the stealer and those with active shields
+    all_users = get_all_users()
+    now = datetime.now()
+    targets = [
+        user for user in all_users 
+        if user['id'] != stealer_id and user['points'] > 0 and 
+        (user['shield'] == 0 or user['shield_expiry'] <= now)
+    ]
+    
+    if not targets:
+        await message.channel.send("لا يوجد أهداف متاحة للسرقة بسبب وجود دروع أو نقص النقاط.")
+        return
+
+    # Determine success or failure (40% success rate)
+    success = random.random() < 0.4
+
+    if success:
+        # Total amount to steal between 25 and 100 points
+        total_stolen_points = random.randint(25, 100)
+        stolen_points_per_target = []
+        successful_targets = []
+        
+        random.shuffle(targets)
+        
+        for target in targets:
+            target_id, target_points = target['id'], target['points']
+            points_to_steal = min(random.randint(1, target_points), total_stolen_points)
+            update_user_points(target_id, -points_to_steal)
+            total_stolen_points -= points_to_steal
+            stolen_points_per_target.append((target_id, points_to_steal))
+            successful_targets.append(target_id)
+
+            if total_stolen_points <= 0:
+                break
+        
+        # Add stolen points to the stealer
+        update_user_points(stealer_id, sum(points for _, points in stolen_points_per_target))
+        target_names = ", ".join([f"<@{target_id}>" for target_id, _ in stolen_points_per_target])
+        
+        await message.channel.send(
+            f"🏴‍☠️ {message.author.mention} نفذ عملية سطو ناجحة وسرق {sum(points for _, points in stolen_points_per_target)} نقاط من: {target_names}!"
+        )
+    else:
+        # Failed heist - assign penalty role
+        role = message.guild.get_role(1281737638063243274)
+        await message.author.add_roles(role)
+        await message.channel.send(
+            f"🔒 {message.author.mention} فشل في عملية السطو وتم معاقبته بالدور <@&{1281737638063243274}>!"
+        )
+
+    # Save cooldown time
+    cooldowns[stealer_id] = now
 async def handle_shop_command(message):
     embed = discord.Embed(
         title="المتجر",
