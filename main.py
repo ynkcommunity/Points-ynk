@@ -750,6 +750,8 @@ async def on_message(message):
             await handle_shop_command(message)
         elif message.content.startswith("-steal"):
             await handle_steal_command(message)
+        elif message.content.startswith("-heist"):
+            await handle_heist_command(message)
         elif message.content.startswith("-family"):
             await handle_family_command(message)
         elif message.content.startswith("-refamily"):
