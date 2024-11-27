@@ -1112,7 +1112,7 @@ async def generate_job(prompt, seed=None):
     params = {
         "new": "true",
         "prompt": f"{urllib.parse.quote(prompt)}",
-        "model": "Realistic_Vision_V2.0.safetensors [79587710]",
+        "model": "v1-5-pruned-emaonly.safetensors [d7049739]",
         "negative_prompt":
         "(nsfw:1.5), (ugly face:0.8), cross-eyed, sketches, bad anatomy, extra digit, mutation, nudity",
         "steps": "30",
