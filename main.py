@@ -1287,7 +1287,7 @@ async def handle_load_command(message):
         return
 
     user_id = str(target_user.id)
-    get_or_create_user(user_id, target_user.name)
+    await get_or_create_user(user_id, target_user.name)
     update_user_points(user_id, amount)
 
     await message.channel.send(
@@ -1311,7 +1311,7 @@ async def handle_daily_command(message):
         if "quests" not in daily_usage[user_id]:
             daily_usage[user_id]["quests"] = False
 
-    get_or_create_user(user_id, message.author.name)
+    await get_or_create_user(user_id, message.author.name)
       
     role_id = 1278375524368125962
     role = message.guild.get_role(role_id)
@@ -1428,7 +1428,7 @@ async def handle_take_command(message):
         return
 
     user_id = str(target_user.id)
-    get_or_create_user(user_id, target_user.name)
+    await get_or_create_user(user_id, target_user.name)
     current_points = get_user_points(user_id)
 
     if amount > current_points:
@@ -1461,7 +1461,7 @@ async def handle_family_command(message):
         return
 
     user_id = str(target_user.id)
-    get_or_create_user(user_id, target_user.name)
+    await get_or_create_user(user_id, target_user.name)
     
     # Update the family role in the database
     update_user_family(user_id, family_role_id)
