@@ -1146,7 +1146,7 @@ async def generate_job(prompt, seed=None):
     params = {
         "new": "true",
         "prompt": f"{urllib.parse.quote(prompt)}",
-        "model": "redshift_diffusion-V10.safetensors [1400e684]",
+        "model": "absolutereality_v181.safetensors [3d9d4d2b]",
         "negative_prompt":
         "(nsfw:1.5), (ugly face:0.8), cross-eyed, sketches, bad anatomy, extra digit, mutation, nudity",
         "steps": "30",
