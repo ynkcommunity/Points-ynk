@@ -24,6 +24,10 @@ MONITORED_CHANNEL_IDS = [
     1267858518803742740,
     1267858517608628284,
 ]
+# Reaction emoji
+BOT_EMOJI = "<a:aneonpurplehearts:1267869606890967171>"
+
+
 intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
@@ -695,7 +699,25 @@ def update_user_points(user_id, points_to_add, username=None):
         print(f"Failed to update user points: {e}")
     finally:
         connection.close()
+@client.event
+async def on_reaction_add(reaction, user):
+    """Award points when a user reacts with the specified emoji."""
+    if user.bot or reaction.message.channel.id not in MONITORED_CHANNEL_IDS:
+        return
 
+    if str(reaction.emoji) == BOT_EMOJI:
+        bot_reacted = any(
+            reaction.emoji == BOT_EMOJI and reaction_user.id == client.user.id
+            for reaction_user in await reaction.users().flatten()
+        )
+        if bot_reacted:
+            update_user_points(user.id, 2, user.name)
+            try:
+                await user.send(
+                    f"You've earned **2 points** for reacting with {BOT_EMOJI} in {reaction.message.channel.mention}!"
+                )
+            except discord.Forbidden:
+                print(f"Could not DM {user.name}.")
 
 def get_user_points(user_id):
     connection = get_db_connection()
@@ -727,6 +749,11 @@ def save_vc_data(data):
 
 @client.event
 async def on_message(message):
+    if message.channel.id in MONITORED_CHANNEL_IDS and not message.author.bot:
+        try:
+            await message.add_reaction(BOT_EMOJI)
+        except discord.HTTPException as e:
+            print(f"Failed to add reaction to message {message.id}: {e}")
     if message.author == client.user:
         return
     if message.content.startswith("-load"):
