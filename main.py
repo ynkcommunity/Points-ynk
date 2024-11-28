@@ -675,7 +675,6 @@ async def get_or_create_user(user_id, username):
 
 
 
-
 def update_user_points(user_id, points_to_add, username=None):
     connection = get_db_connection()
     try:
@@ -699,25 +698,30 @@ def update_user_points(user_id, points_to_add, username=None):
         print(f"Failed to update user points: {e}")
     finally:
         connection.close()
+
 @client.event
 async def on_reaction_add(reaction, user):
-    """Award points when a user reacts with the specified emoji."""
+    """Award points to all users who react to the bot's reaction."""
     if user.bot or reaction.message.channel.id not in MONITORED_CHANNEL_IDS:
         return
 
     if str(reaction.emoji) == BOT_EMOJI:
         bot_reacted = any(
-            reaction.emoji == BOT_EMOJI and reaction_user.id == client.user.id
+            reaction_user.id == client.user.id
             for reaction_user in await reaction.users().flatten()
         )
+
         if bot_reacted:
-            update_user_points(user.id, 2, user.name)
-            try:
-                await user.send(
-                    f"You've earned **2 points** for reacting with {BOT_EMOJI} in {reaction.message.channel.mention}!"
-                )
-            except discord.Forbidden:
-                print(f"Could not DM {user.name}.")
+            reacting_users = await reaction.users().flatten()
+            for reacting_user in reacting_users:
+                if not reacting_user.bot:
+                    update_user_points(reacting_user.id, 2, reacting_user.name)
+                    try:
+                        await reacting_user.send(
+                            f"You've earned **2 points** for reacting with {BOT_EMOJI} in {reaction.message.channel.mention}!"
+                        )
+                    except discord.Forbidden:
+                        print(f"Could not DM {reacting_user.name}.")
 
 def get_user_points(user_id):
     connection = get_db_connection()
@@ -2099,7 +2103,6 @@ async def reset_rage_mode():
 async def daily_reset():
     now = datetime.now()
 
-    # Check if the time is exactly 20:00:00 (hour 20, minute 0, second 0)
     if now.hour == 20 and now.minute == 0 and now.second == 0:
         print('Performing daily reset...')
 
