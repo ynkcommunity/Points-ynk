@@ -16,7 +16,14 @@ from keep_alive import keep_alive
 import aiomysql
 import string
 
-
+MONITORED_CHANNEL_IDS = [
+    1267858595802779648,
+    1267858602018865152,
+    1267858589540679742,
+    1267858542862536776,
+    1267858518803742740,
+    1267858517608628284,
+]
 intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
@@ -1112,7 +1119,7 @@ async def generate_job(prompt, seed=None):
     params = {
         "new": "true",
         "prompt": f"{urllib.parse.quote(prompt)}",
-        "model": "Realistic_Vision_V5.0.safetensors [614d1063]",
+        "model": "redshift_diffusion-V10.safetensors [1400e684]",
         "negative_prompt":
         "(nsfw:1.5), (ugly face:0.8), cross-eyed, sketches, bad anatomy, extra digit, mutation, nudity",
         "steps": "30",
