@@ -700,19 +700,23 @@ def update_user_points(user_id, points_to_add, username=None):
         connection.close()
 
 @client.event
+
 async def on_reaction_add(reaction, user):
     """Award points to all users who react to the bot's reaction."""
     if user.bot or reaction.message.channel.id not in MONITORED_CHANNEL_IDS:
         return
 
     if str(reaction.emoji) == BOT_EMOJI:
-        bot_reacted = any(
-            reaction_user.id == client.user.id
-            for reaction_user in await reaction.users().flatten()
-        )
-
+        bot_reacted = False
+        reacting_users = []
+        
+        # Use async for loop to handle the async generator
+        async for reaction_user in reaction.users():
+            reacting_users.append(reaction_user)
+            if reaction_user.id == client.user.id:
+                bot_reacted = True
+        
         if bot_reacted:
-            reacting_users = await reaction.users().flatten()
             for reacting_user in reacting_users:
                 if not reacting_user.bot:
                     update_user_points(reacting_user.id, 2, reacting_user.name)
@@ -722,6 +726,7 @@ async def on_reaction_add(reaction, user):
                         )
                     except discord.Forbidden:
                         print(f"Could not DM {reacting_user.name}.")
+
 
 def get_user_points(user_id):
     connection = get_db_connection()
