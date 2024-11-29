@@ -698,34 +698,50 @@ def update_user_points(user_id, points_to_add, username=None):
         print(f"Failed to update user points: {e}")
     finally:
         connection.close()
+reaction_tracker = {}
 
 @client.event
-
 async def on_reaction_add(reaction, user):
-    """Award points to all users who react to the bot's reaction."""
+    """Award points to users who react to the bot's reaction once per message."""
     if user.bot or reaction.message.channel.id not in MONITORED_CHANNEL_IDS:
         return
 
     if str(reaction.emoji) == BOT_EMOJI:
-        bot_reacted = False
-        reacting_users = []
-        
-        # Use async for loop to handle the async generator
-        async for reaction_user in reaction.users():
-            reacting_users.append(reaction_user)
-            if reaction_user.id == client.user.id:
-                bot_reacted = True
-        
-        if bot_reacted:
-            for reacting_user in reacting_users:
-                if not reacting_user.bot:
-                    update_user_points(reacting_user.id, 2, reacting_user.name)
-                    try:
-                        await reacting_user.send(
-                            f"You've earned **2 points** for reacting with {BOT_EMOJI} in {reaction.message.channel.mention}!"
-                        )
-                    except discord.Forbidden:
-                        print(f"Could not DM {reacting_user.name}.")
+        message_id = reaction.message.id
+
+        # Initialize reaction tracking for this message if not present
+        if message_id not in reaction_tracker:
+            reaction_tracker[message_id] = set()
+
+        # Check if the user has already reacted to this message
+        if user.id not in reaction_tracker[message_id]:
+            bot_reacted = False
+
+            async for reaction_user in reaction.users():
+                if reaction_user.id == client.user.id:
+                    bot_reacted = True
+                    break
+            
+            if bot_reacted:
+                reaction_tracker[message_id].add(user.id)  # Track user's reaction
+                update_user_points(user.id, 2, user.name)
+                try:
+                    await user.send(
+                        f"You've earned **2 points** for reacting with {BOT_EMOJI} in {reaction.message.channel.mention}!"
+                    )
+                except discord.Forbidden:
+                    print(f"Could not DM {user.name}.")
+
+@client.event
+async def on_reaction_remove(reaction, user):
+    """Remove the user from the reaction tracker if they remove their reaction."""
+    if user.bot or reaction.message.channel.id not in MONITORED_CHANNEL_IDS:
+        return
+
+    if str(reaction.emoji) == BOT_EMOJI:
+        message_id = reaction.message.id
+        if message_id in reaction_tracker:
+            reaction_tracker[message_id].discard(user.id)
 
 
 def get_user_points(user_id):
