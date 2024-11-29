@@ -698,32 +698,47 @@ def update_user_points(user_id, points_to_add, username=None):
         print(f"Failed to update user points: {e}")
     finally:
         connection.close()
-reaction_tracker = {}
+REACTION_TRACKER_FILE = "reaction_tracker.json"  
 
+def load_reaction_tracker():
+    if os.path.exists(REACTION_TRACKER_FILE):
+        with open(REACTION_TRACKER_FILE, "r") as file:
+            return json.load(file)
+    return {}
+
+def save_reaction_tracker(data):
+    with open(REACTION_TRACKER_FILE, "w") as file:
+        json.dump(data, file, indent=4)
+
+reaction_tracker = load_reaction_tracker()
 @client.event
 async def on_reaction_add(reaction, user):
-    """Award points to users who react to the bot's reaction once per message."""
+    """Award points with persistent tracking."""
     if user.bot or reaction.message.channel.id not in MONITORED_CHANNEL_IDS:
         return
 
     if str(reaction.emoji) == BOT_EMOJI:
-        message_id = reaction.message.id
+        message_id = str(reaction.message.id)
+        user_id = str(user.id)
 
-        # Initialize reaction tracking for this message if not present
+        # Create entry for the message if it doesn't exist
         if message_id not in reaction_tracker:
-            reaction_tracker[message_id] = set()
+            reaction_tracker[message_id] = []
 
-        # Check if the user has already reacted to this message
-        if user.id not in reaction_tracker[message_id]:
+        # Check if the user has already reacted
+        if user_id not in reaction_tracker[message_id]:
             bot_reacted = False
 
+            # Ensure the bot's reaction exists
             async for reaction_user in reaction.users():
                 if reaction_user.id == client.user.id:
                     bot_reacted = True
                     break
-            
+
             if bot_reacted:
-                reaction_tracker[message_id].add(user.id)  # Track user's reaction
+                reaction_tracker[message_id].append(user_id)  # Track this reaction
+                save_reaction_tracker(reaction_tracker)  # Persist changes
+
                 update_user_points(user.id, 2, user.name)
                 try:
                     await user.send(
@@ -734,15 +749,18 @@ async def on_reaction_add(reaction, user):
 
 @client.event
 async def on_reaction_remove(reaction, user):
-    """Remove the user from the reaction tracker if they remove their reaction."""
+    """Remove the user from the reaction tracker upon unreacting."""
     if user.bot or reaction.message.channel.id not in MONITORED_CHANNEL_IDS:
         return
 
     if str(reaction.emoji) == BOT_EMOJI:
-        message_id = reaction.message.id
-        if message_id in reaction_tracker:
-            reaction_tracker[message_id].discard(user.id)
+        message_id = str(reaction.message.id)
+        user_id = str(user.id)
 
+        # Remove user's reaction from the tracker
+        if message_id in reaction_tracker and user_id in reaction_tracker[message_id]:
+            reaction_tracker[message_id].remove(user_id)
+            save_reaction_tracker(reaction_tracker)  # Persist changes
 
 def get_user_points(user_id):
     connection = get_db_connection()
